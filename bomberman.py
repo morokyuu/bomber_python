@@ -549,7 +549,13 @@ class Map:
 #        block_list[contain_index].containItem(ITEM_BOM)
 #        block_list[contain_index+1].containItem(ITEM_FIRE)
 #        pass
-        print(field)
+
+    def disp(self):
+        # field drawing
+        for y,line in enumerate(field):
+            for x,field_obj in enumerate(line):
+                drawChip(field_obj,x*CHIPSIZE,y*CHIPSIZE)
+        pass
 
 
 def keyInput():
@@ -578,7 +584,9 @@ if __name__ == "__main__":
     running = True
     while running:
         running,keystate = keyInput()
+        screen.fill((0,0,0))
         #print(keystate)
+        map_.disp()
         pygame.display.flip()
         fpsClock.tick(FPS)
 
