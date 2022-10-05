@@ -15,6 +15,7 @@ https://www.fenet.jp/dotnet/column/language/6708/
 import pygame
 from pygame.locals import *
 import random
+from enum import Enum
 
 # field value
 CH_FREE = 0
@@ -23,6 +24,14 @@ CH_HARD = 2
 CH_SOFT = 3
 CH_BOM = 4
 CH_ITEM = 5
+
+class Field(Enum):
+    FREE = 0
+    FIRE = 1
+    HARD = 2
+    SOFT = 3
+    BOM = 4
+    ITEM = 5
 
 # item type
 ITEM_NONE = 0
@@ -508,6 +517,41 @@ def st_title_loop(running, gamestate):
     
     return running,gamestate
 
+class Map:
+    def __init__(self):
+        self.field = []
+        self._initMap()
+        pass
+
+    def _initMap(self):
+        for i in range(CHIPNUM_H):
+            if i == 0 or i == CHIPNUM_H-1:
+                field.append([Field.HARD] * CHIPNUM_W)
+            elif i % 2 == 1:
+                line = [Field.FREE] * CHIPNUM_W
+                line[0] = Field.HARD
+                line[CHIPNUM_W-1] = Field.HARD
+                field.append(line)
+            elif i % 2 == 0:
+                line = [Field.HARD] * CHIPNUM_W
+                for i in range(1,CHIPNUM_W,2):
+                    line[i] = Field.FREE
+                field.append(line)
+        
+        for i in range(10):
+            x = random.randint(2, CHIPNUM_W-1)
+            y = random.randint(2, CHIPNUM_H-1)
+            if field[y][x] == Field.FREE:
+                block_list.append(Block(x,y))
+
+#        # Soft block randomly contains an item
+#        contain_index = random.randint(0,len(block_list))
+#        block_list[contain_index].containItem(ITEM_BOM)
+#        block_list[contain_index+1].containItem(ITEM_FIRE)
+#        pass
+        print(field)
+
+
 def keyInput():
     running = True
     for event in pygame.event.get():
@@ -528,12 +572,13 @@ if __name__ == "__main__":
     pygame.display.set_caption("bomber man")
     clock = pygame.time.Clock()
 
-#    game = GameClass()
+    map_ = Map()
+
 
     running = True
     while running:
         running,keystate = keyInput()
-        print(keystate)
+        #print(keystate)
         pygame.display.flip()
         fpsClock.tick(FPS)
 
