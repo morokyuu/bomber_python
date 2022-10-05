@@ -508,35 +508,34 @@ def st_title_loop(running, gamestate):
     
     return running,gamestate
 
+def keyInput():
+    running = True
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                running = False
+    keystate = pygame.key.get_pressed()
+    return running,keystate
 
 
 ####################################################################
 
-pygame.init()
+if __name__ == "__main__":
+    pygame.init()
+    screen = pygame.display.set_mode([WINDOW_W, WINDOW_H])
+    pygame.display.set_caption("bomber man")
+    clock = pygame.time.Clock()
 
-screen = pygame.display.set_mode([WINDOW_W, WINDOW_H])
-pygame.display.set_caption("bomber man")
-clock = pygame.time.Clock()
-mono_font = pygame.font.Font("/usr/share/fonts/truetype/ubuntu-font-family/UbuntuMono-R.ttf", 50)
-mono_item_font = pygame.font.Font("/usr/share/fonts/truetype/ubuntu-font-family/UbuntuMono-R.ttf", 30)
+#    game = GameClass()
 
-pygame.mixer.init(frequency = 44100, size = -16, channels = 2, buffer = 1024)
-bom_sound = pygame.mixer.Sound("explosion.wav")
+    running = True
+    while running:
+        running,keystate = keyInput()
+        print(keystate)
+        pygame.display.flip()
+        fpsClock.tick(FPS)
 
-
-gamestate = ST_TITLE
-running = True
-while running:
-    
-    if gamestate == ST_TITLE:
-        running,gamestate = st_title_loop(running, gamestate)
-    elif gamestate == ST_GAME:
-        running,gamestate = st_game_loop(running, gamestate)
-    elif gamestate == ST_GAMEOVER:
-        running,gamestate = st_gameover_loop(running, gamestate)
-    
-    pygame.display.flip()
-    fpsClock.tick(FPS)
-
-pygame.quit()
+    pygame.quit()
 
