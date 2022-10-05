@@ -7,8 +7,12 @@ This is a temporary script file.
 Usable Font search
 $ fc-list
 
+::References::
 Enum class
 https://www.fenet.jp/dotnet/column/language/6708/
+
+super class constructor(init) call
+https://uxmilk.jp/15665
 
 """
 
@@ -25,7 +29,7 @@ CH_SOFT = 3
 CH_BOM = 4
 CH_ITEM = 5
 
-class Field(Enum):
+class Type(Enum):
     FREE = 0
     FIRE = 1
     HARD = 2
@@ -80,11 +84,21 @@ def print_field():
     for f in field:
         print(f)
 
-class Item():
-    def __init__(self, ch_x, ch_y, item_type):
-        self.ch_x = ch_x
-        self.ch_y = ch_y
+class Chara:
+    def __init__(self,XY,chType,field_map):
+        self.XY = XY
+        self.chType = chType
+        self.field_map = field_map
         self.dead = False
+    def disp(self):
+        pass
+    def act(self):
+        pass
+        
+
+class Item(Chara):
+    def __init__(self, X, Y, item_type):
+        super.__init__(X,Y)
         field[self.ch_y][self.ch_x] = CH_ITEM
         self.item_type = item_type
 
@@ -111,32 +125,28 @@ class Item():
 
 
 
-class Block():
-    def __init__(self, ch_x, ch_y):
-        self.ch_x = ch_x
-        self.ch_y = ch_y
-        self.dead = False
-        field[self.ch_y][self.ch_x] = CH_SOFT
-        self.item_type = ITEM_NONE
-        
-    def containItem(self,item_type):
+class Block(Chara):
+    def __init__(self, XY, field_map,item_type=ITEM_NONE):
+        super().__init__(XY,Type.SOFT,field_map)
         self.item_type = item_type
 
     def execute(self):
-        # when block was broken by fire
-        px = self.ch_x
-        py = self.ch_y
-        if field[py][px] == CH_FIRE:
-            field[py][px] = CH_FREE
-            self.dead = True
-
-            if self.item_type:
-                item_list.append(Item(px,py,self.item_type))
+        return 
     
     def draw(self):
-        pygame.draw.rect(screen, CL_SOFT, (self.ch_x * CHIPSIZE,self.ch_y * CHIPSIZE,32,32))
+        pygame.draw.rect(screen, CL_SOFT, (self.XY[0]*CHIPSIZE, self.XY[1]*CHIPSIZE, 32,32))
 
-class Bom():
+class HardBlock(Chara):
+    def __init__(self, XY, field_map):
+        super().__init__(XY,Type.HARD,field_map)
+
+    def execute(self):
+        return 
+    
+    def draw(self):
+        pygame.draw.rect(screen, CL_HARD, (self.XY[0]*CHIPSIZE, self.XY[1]*CHIPSIZE, 32,32))
+
+class oldBom():
     def __init__(self, ch_x, ch_y, power):
         self.ch_x = ch_x
         self.ch_y = ch_y
@@ -308,7 +318,13 @@ class Player:
 
 
 
-
+def drawWorld(field_map):
+    for Y,line in enumerate(field_map.field):
+        for X,f in enumerate(line):
+            if f == Type.FREE:
+                pygame.draw.rect(screen, CL_FREE, (X*CHIPSIZE, Y*CHIPSIZE, 32,32))
+            elif f == Type.HARD:
+                pygame.draw.rect(screen, CL_HARD, (X*CHIPSIZE, Y*CHIPSIZE, 32,32))
 
 
 def drawChip(type,x,y):
@@ -384,11 +400,12 @@ class GameClass:
                     line[i] = CH_FREE
                 field.append(line)
         
-        for i in range(10):
-            x = random.randint(2, CHIPNUM_W-1)
-            y = random.randint(2, CHIPNUM_H-1)
-            if field[y][x] == CH_FREE:
-                block_list.append(Block(x,y))
+        #TODO New Block
+#        for i in range(10):
+#            x = random.randint(2, CHIPNUM_W-1)
+#            y = random.randint(2, CHIPNUM_H-1)
+#            if field[y][x] == CH_FREE:
+#                block_list.append(Block(x,y))
 
         # Soft block randomly contains an item
         contain_index = random.randint(0,len(block_list))
@@ -517,32 +534,43 @@ def st_title_loop(running, gamestate):
     
     return running,gamestate
 
-class Map:
+class FieldMap:
     def __init__(self):
         self.field = []
         self._initMap()
         pass
 
+    def put(self,XY,chType):
+        self.field[self._getFieldIndex(XY)] = chType
+
+    def get(self,XY):
+        return self.field[self._getFieldIndex(XY)]
+
+    def _getFieldIndex(self,XY):
+        return (XY[1]*CHIPNUM_W + XY[0])
+
     def _initMap(self):
         for i in range(CHIPNUM_H):
             if i == 0 or i == CHIPNUM_H-1:
-                field.append([Field.HARD] * CHIPNUM_W)
+                field.append([Type.HARD] * CHIPNUM_W)
             elif i % 2 == 1:
-                line = [Field.FREE] * CHIPNUM_W
-                line[0] = Field.HARD
-                line[CHIPNUM_W-1] = Field.HARD
+                line = [Type.FREE] * CHIPNUM_W
+                line[0] = Type.HARD
+                line[CHIPNUM_W-1] = Type.HARD
                 field.append(line)
             elif i % 2 == 0:
-                line = [Field.HARD] * CHIPNUM_W
+                line = [Type.HARD] * CHIPNUM_W
                 for i in range(1,CHIPNUM_W,2):
-                    line[i] = Field.FREE
+                    line[i] = Type.FREE
                 field.append(line)
+        self.field = field
+        #print(self.field)
         
-        for i in range(10):
-            x = random.randint(2, CHIPNUM_W-1)
-            y = random.randint(2, CHIPNUM_H-1)
-            if field[y][x] == Field.FREE:
-                block_list.append(Block(x,y))
+#        for i in range(10):
+#            x = random.randint(2, CHIPNUM_W-1)
+#            y = random.randint(2, CHIPNUM_H-1)
+#            if field[y][x] == Type.FREE:
+#                block_list.append(Block(x,y))
 
 #        # Soft block randomly contains an item
 #        contain_index = random.randint(0,len(block_list))
@@ -550,12 +578,6 @@ class Map:
 #        block_list[contain_index+1].containItem(ITEM_FIRE)
 #        pass
 
-    def disp(self):
-        # field drawing
-        for y,line in enumerate(field):
-            for x,field_obj in enumerate(line):
-                drawChip(field_obj,x*CHIPSIZE,y*CHIPSIZE)
-        pass
 
 
 def keyInput():
@@ -578,7 +600,8 @@ if __name__ == "__main__":
     pygame.display.set_caption("bomber man")
     clock = pygame.time.Clock()
 
-    map_ = Map()
+    fmap = FieldMap()
+    
 
 
     running = True
@@ -586,7 +609,8 @@ if __name__ == "__main__":
         running,keystate = keyInput()
         screen.fill((0,0,0))
         #print(keystate)
-        map_.disp()
+        #fmap.disp()
+        drawWorld(fmap)
         pygame.display.flip()
         fpsClock.tick(FPS)
 
