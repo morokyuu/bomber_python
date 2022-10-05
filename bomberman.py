@@ -80,6 +80,7 @@ def print_field():
     for f in field:
         print(f)
 
+
 class Item():
     def __init__(self, ch_x, ch_y, item_type):
         self.ch_x = ch_x
