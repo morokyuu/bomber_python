@@ -139,6 +139,7 @@ class Item(Chara):
 class Block(Chara):
     def __init__(self, XY, field_map,item_type=ITEM_NONE):
         super().__init__(XY,Type.SOFT,field_map)
+        fmap.put(XY,Type.SOFT)
         self.item_type = item_type
 
     def execute(self):
@@ -609,9 +610,9 @@ if __name__ == "__main__":
 
     fmap = FieldMap()
     
-    fmap.put((1,1),Type.SOFT)
-    fmap.put((3,3),Type.SOFT)
 
+    blk0 = Block((1,1),fmap)
+    blk1 = Block((3,3),fmap)
 
     running = True
     while running:
@@ -621,6 +622,8 @@ if __name__ == "__main__":
         #fmap.disp()
         #drawWorld(fmap)
         fmap.draw()
+        blk0.draw()
+        blk1.draw()
         pygame.display.flip()
         fpsClock.tick(FPS)
 
