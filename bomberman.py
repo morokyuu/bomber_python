@@ -92,6 +92,7 @@ class GameTask:
     def __init__(self):
         self.priority = priority
         pass
+
     def exec(self):
         pass
 
@@ -328,13 +329,6 @@ class Player:
 
 
 
-def drawWorld(field_map):
-    for Y,line in enumerate(field_map.field):
-        for X,f in enumerate(line):
-            if f == Type.FREE:
-                pygame.draw.rect(screen, CL_FREE, (X*CHIPSIZE, Y*CHIPSIZE, 32,32))
-            elif f == Type.HARD:
-                pygame.draw.rect(screen, CL_HARD, (X*CHIPSIZE, Y*CHIPSIZE, 32,32))
 
 
 def drawChip(type,x,y):
@@ -548,7 +542,6 @@ class FieldMap:
     def __init__(self):
         self.field = list() #2-dimention
         self._initMap()
-        pass
 
     def put(self,XY,chType):
         self.field[XY[1]][XY[0]] = chType
@@ -571,7 +564,14 @@ class FieldMap:
                     line[i] = Type.FREE
                 field.append(line)
         self.field = field
-        #print(self.field)
+
+    def draw(self):
+        for Y,line in enumerate(self.field):
+            for X,f in enumerate(line):
+                if f == Type.HARD:
+                    pygame.draw.rect(screen, CL_HARD, (X*CHIPSIZE, Y*CHIPSIZE, 32,32))
+                else:
+                    pygame.draw.rect(screen, CL_FREE, (X*CHIPSIZE, Y*CHIPSIZE, 32,32))
         
 #        for i in range(10):
 #            x = random.randint(2, CHIPNUM_W-1)
@@ -619,7 +619,8 @@ if __name__ == "__main__":
         screen.fill((0,0,0))
         #print(keystate)
         #fmap.disp()
-        drawWorld(fmap)
+        #drawWorld(fmap)
+        fmap.draw()
         pygame.display.flip()
         fpsClock.tick(FPS)
 
