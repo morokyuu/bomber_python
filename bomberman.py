@@ -89,15 +89,16 @@ def print_field():
 ## すべての要素をゲームタスクというインターフェースでタスクリストに登録する
 ## FieldMapはCharaというタスクの一種にする。
 class GameTask:
-    def __init__(self,priority):
+    def __init__(self):
         self.priority = priority
         pass
     def exec(self):
         pass
 
 class Chara(GameTask):
-    def __init__(self,XY,field_map):
+    def __init__(self,XY,chType,field_map):
         self.XY = XY
+        self.chType = chType
         self.field_map = field_map
         self.dead = False
 
@@ -543,9 +544,8 @@ def st_title_loop(running, gamestate):
     
     return running,gamestate
 
-class FieldMap(Chara):
+class FieldMap:
     def __init__(self):
-        super().__init__((0,0),
         self.field = list() #2-dimention
         self._initMap()
         pass
