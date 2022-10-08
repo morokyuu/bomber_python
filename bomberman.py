@@ -84,15 +84,24 @@ def print_field():
     for f in field:
         print(f)
 
-class Chara:
-    def __init__(self,XY,chType,field_map):
+## feature-ex1-tasklist
+## MEMO
+## すべての要素をゲームタスクというインターフェースでタスクリストに登録する
+## FieldMapはCharaというタスクの一種にする。
+class GameTask:
+    def __init__(self,priority):
+        self.priority = priority
+        pass
+    def exec(self):
+        pass
+
+class Chara(GameTask):
+    def __init__(self,XY,field_map):
         self.XY = XY
-        self.chType = chType
         self.field_map = field_map
         self.dead = False
+
     def disp(self):
-        pass
-    def act(self):
         pass
         
 
@@ -534,8 +543,9 @@ def st_title_loop(running, gamestate):
     
     return running,gamestate
 
-class FieldMap:
+class FieldMap(Chara):
     def __init__(self):
+        super().__init__((0,0),
         self.field = list() #2-dimention
         self._initMap()
         pass
@@ -599,6 +609,8 @@ if __name__ == "__main__":
 
     fmap = FieldMap()
     
+    fmap.put((1,1),Type.SOFT)
+    fmap.put((3,3),Type.SOFT)
 
 
     running = True
