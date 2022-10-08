@@ -536,18 +536,15 @@ def st_title_loop(running, gamestate):
 
 class FieldMap:
     def __init__(self):
-        self.field = []
+        self.field = list() #2-dimention
         self._initMap()
         pass
 
     def put(self,XY,chType):
-        self.field[self._getFieldIndex(XY)] = chType
+        self.field[XY[1]][XY[0]] = chType
 
     def get(self,XY):
-        return self.field[self._getFieldIndex(XY)]
-
-    def _getFieldIndex(self,XY):
-        return (XY[1]*CHIPNUM_W + XY[0])
+        return self.field[XY[1]][XY[0]]
 
     def _initMap(self):
         for i in range(CHIPNUM_H):
