@@ -96,6 +96,13 @@ class GameTask:
     def exec(self):
         pass
 
+class BackGround(GameTask):
+    def __init__(self):
+        pass
+    def draw(self):
+        pass
+
+
 class Chara(GameTask):
     def __init__(self,XY,chType,field_map):
         self.XY = XY
@@ -103,7 +110,7 @@ class Chara(GameTask):
         self.field_map = field_map
         self.dead = False
 
-    def disp(self):
+    def draw(self):
         pass
         
 
@@ -539,7 +546,7 @@ def st_title_loop(running, gamestate):
     
     return running,gamestate
 
-class FieldMap:
+class FieldMap(BackGround):
     def __init__(self):
         self.field = list() #2-dimention
         self._initMap()
