@@ -36,6 +36,7 @@ class Type(Enum):
     SOFT = 3
     BOM = 4
     ITEM = 5
+    PLAYER = 6
 
 # item type
 ITEM_NONE = 0
@@ -270,26 +271,24 @@ class Fire():
             CHIPSIZE/2)
         
         
-class Player:
-    def __init__(self,ch_x, ch_y):
-        self.ch_x = ch_x #atari hantei position
-        self.ch_y = ch_y
+class Player(Chara):
+    def __init__(self,XY,field_map):
+        super().__init__(XY,Type.PLAYER,field_map)
         # game variable
         self.bom_power = 2
         self.bom_stock = 2
-        # self.x = self.ch_x / CHIPSIZE
-        # self.y = self.ch_y / CHIPSIZE
         self.dead = False
+
 
     def execute(self, dx, dy, btn_space):
         # death
-        if field[self.ch_y][self.ch_x] == CH_FIRE:
+        if self.field_map[self.XY[1]][self.XY[0]] == CH_FIRE:
             self.dead = True
-        # put a bom
-        if len(bom_list) < self.bom_stock:
-            if field[self.ch_y][self.ch_x] == CH_FREE:
-                if btn_space == True:
-                    bom_list.append(Bom(self.ch_x, self.ch_y,self.bom_power))
+#        # put a bom
+#        if len(bom_list) < self.bom_stock:
+#            if field[self.ch_y][self.ch_x] == CH_FREE:
+#                if btn_space == True:
+#                    bom_list.append(Bom(self.ch_x, self.ch_y,self.bom_power))
         # walking
         px = self.ch_x+dx
         py = self.ch_y+dy
