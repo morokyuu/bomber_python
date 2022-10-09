@@ -300,8 +300,8 @@ class Player(Chara):
             dy = 1
         #print(f"{self.XY},{temp_XY},{targ}")
         #print(f"({dx},{dy})")
-        targ = Type.FREE
-        return dx,dy,targ
+        #targ = Type.FREE
+        return dx,dy
 
     def control(self, key):
 #        # put a bom
@@ -311,7 +311,7 @@ class Player(Chara):
 #                    bom_list.append(Bom(self.ch_x, self.ch_y,self.bom_power))
 
         # moved position
-        dx,dy,targ = self.readKey(key)
+        dx,dy = self.readKey(key)
 
         if targ == CH_FIRE:
             # death
