@@ -22,8 +22,15 @@ class Test_FieldMap(unittest.TestCase):
         chType = self.fmap.get((1,1))
         self.assertEqual(chType,bm.Type.SOFT,"put or get incorrect")
 
-#    def test_getXY(self):
-#        self.fmap.getXY(bm.CHIPSIZE+
+    def test_getXY(self):
+        XY = self.fmap.getXY((15,15))
+        self.assertEqual((0,0),XY,"invalid translation of xy")
+        XY = self.fmap.getXY((31,31))
+        self.assertEqual((0,0),XY,"invalid translation of xy")
+        XY = self.fmap.getXY((32,32))
+        self.assertEqual((1,1),XY,"invalid translation of xy")
+        XY = self.fmap.getXY((32,31))
+        self.assertEqual((1,0),XY,"invalid translation of xy")
 
 if __name__ == '__main__':
     unittest.main()
