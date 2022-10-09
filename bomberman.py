@@ -19,7 +19,7 @@ https://uxmilk.jp/15665
 import pygame
 from pygame.locals import *
 import random
-from enum import Enum
+from enum import Enum,auto
 
 # field value
 CH_FREE = 0
@@ -28,6 +28,14 @@ CH_HARD = 2
 CH_SOFT = 3
 CH_BOM = 4
 CH_ITEM = 5
+
+class KeyInput(Enum):
+    NONE = auto()
+    UP = auto()
+    DOWN = auto()
+    RIGHT = auto()
+    LEFT = auto()
+    PUTBOM = auto()
 
 class Type(Enum):
     FREE = 0
@@ -280,26 +288,38 @@ class Player(Chara):
         self.bom_stock = 2
         self.dead = False
 
+    def readKey(self,keystate):
+        dx,dy = (0,0)
+        if key == KeyInput.RIGHT:
+            dx = 1
+        elif key == KeyInput.LEFT:
+            dx = -1
+        elif key == KeyInput.UP:
+            dy = -1
+        elif key == KeyInput.DOWN:
+            dy = 1
+        #print(f"{self.XY},{temp_XY},{targ}")
+        #print(f"({dx},{dy})")
+        targ = Type.FREE
+        return dx,dy,targ
 
-    def execute(self, dx, dy, btn_space):
+    def control(self, key):
 #        # put a bom
 #        if len(bom_list) < self.bom_stock:
 #            if field[self.ch_y][self.ch_x] == CH_FREE:
 #                if btn_space == True:
 #                    bom_list.append(Bom(self.ch_x, self.ch_y,self.bom_power))
 
-        # simulate
-        temp_xy = (self.xy[0]+dx, self.xy[1]+dy)
-        XY = self.field_map.getXY(temp_xy)
-        targ = self.field_map.get(XY)
+        # moved position
+        dx,dy,targ = self.readKey(key)
 
         if targ == CH_FIRE:
             # death
             self.dead = True
         elif not (targ == Type.HARD or targ == Type.SOFT or targ == Type.BOM):
             # walking
-            self.xy[0] += dx
-            self.xy[1] += dy
+            self.xy = (self.xy[0] + dx, self.xy[1] + dy)
+            self.XY = self.field_map.getXY(self.xy)
 
 #            # item get
 #            if targ == Type.ITEM:
@@ -599,6 +619,19 @@ def keyInput():
     keystate = pygame.key.get_pressed()
     return running,keystate
 
+# 他の入力装置の時に置き換えが効くように
+# キーボード入力をEnumに置き換える。
+def keystateToKeyInput(keystate):
+    key = KeyInput.NONE
+    if keystate[pygame.K_RIGHT]:
+        key = KeyInput.RIGHT
+    elif keystate[pygame.K_LEFT]:
+        key = KeyInput.LEFT
+    elif keystate[pygame.K_UP]:
+        key = KeyInput.UP
+    elif keystate[pygame.K_DOWN]:
+        key = KeyInput.DOWN
+    return key
 
 ####################################################################
 
@@ -617,10 +650,13 @@ if __name__ == "__main__":
     running = True
     while running:
         running,keystate = keyInput()
+        key = keystateToKeyInput(keystate)
+
         screen.fill((0,0,0))
         #print(keystate)
         #fmap.disp()
         drawWorld(fmap)
+        player.control(key)
         player.draw()
 
         pygame.display.flip()
