@@ -545,6 +545,14 @@ class FieldMap:
     def get(self,XY):
         return self.field[XY[1]][XY[0]]
 
+    def getXY(self,xy):
+        return (xy[0] // CHIPSIZE, xy[1] // CHIPSIZE)
+
+    def getxy(self,XY):
+        offset = CHIPSIZE//2
+        return (XY[0] * CHIPSIZE + offset,
+                XY[1] * CHIPSIZE + offset)
+
     def _initMap(self):
         for i in range(CHIPNUM_H):
             if i == 0 or i == CHIPNUM_H-1:
