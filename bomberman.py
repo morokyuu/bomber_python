@@ -80,9 +80,6 @@ BOM_TIMEOUT_FRAME = 100
 FIRE_FRAME = 30
 
 
-def print_field():
-    for f in field:
-        print(f)
 
 ## feature-ex1-tasklist
 ## MEMO
@@ -92,7 +89,6 @@ class GameTask:
     def __init__(self):
         self.priority = priority
         pass
-
     def exec(self):
         pass
 
@@ -101,7 +97,6 @@ class BackGround(GameTask):
         pass
     def draw(self):
         pass
-
 
 class Chara(GameTask):
     def __init__(self,XY,chType,field_map):
@@ -155,15 +150,6 @@ class Block(Chara):
     def draw(self):
         pygame.draw.rect(screen, CL_SOFT, (self.XY[0]*CHIPSIZE, self.XY[1]*CHIPSIZE, 32,32))
 
-class HardBlock(Chara):
-    def __init__(self, XY, field_map):
-        super().__init__(XY,Type.HARD,field_map)
-
-    def execute(self):
-        return 
-    
-    def draw(self):
-        pygame.draw.rect(screen, CL_HARD, (self.XY[0]*CHIPSIZE, self.XY[1]*CHIPSIZE, 32,32))
 
 class oldBom():
     def __init__(self, ch_x, ch_y, power):
@@ -616,21 +602,21 @@ if __name__ == "__main__":
     clock = pygame.time.Clock()
 
     fmap = FieldMap()
-    
 
-    blk0 = Block((1,1),fmap)
-    blk1 = Block((3,3),fmap)
+    task = []
+    task.append(fmap)
+
+    task.append(Block((3,3),fmap))
 
     running = True
     while running:
         running,keystate = keyInput()
         screen.fill((0,0,0))
-        #print(keystate)
-        #fmap.disp()
-        #drawWorld(fmap)
-        fmap.draw()
-        blk0.draw()
-        blk1.draw()
+
+        for t in task:
+            t.draw()
+
+
         pygame.display.flip()
         fpsClock.tick(FPS)
 
