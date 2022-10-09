@@ -32,5 +32,22 @@ class Test_FieldMap(unittest.TestCase):
         XY = self.fmap.getXY((32,31))
         self.assertEqual((1,0),XY,"invalid translation of xy")
 
+    def test_getxy(self):
+        offset = bm.CHIPSIZE//2
+
+        XY = (0,0)
+        xy = self.fmap.getxy(XY)
+        print(f"{XY}->{xy}")
+        self.assertEqual((offset,offset),xy,"invalid translation of XY")
+
+        XY = (1,1)
+        xy = self.fmap.getxy(XY)
+        ans = (XY[0]*bm.CHIPSIZE+offset,
+               XY[1]*bm.CHIPSIZE+offset)
+        print(f"{XY}->{ans}")
+        self.assertEqual(ans,xy,"invalid translation of XY")
+
+
+
 if __name__ == '__main__':
     unittest.main()
