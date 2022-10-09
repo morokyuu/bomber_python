@@ -274,6 +274,7 @@ class Fire():
 class Player(Chara):
     def __init__(self,XY,field_map):
         super().__init__(XY,Type.PLAYER,field_map)
+        self.xy = field_map.getxy(XY)
         # game variable
         self.bom_power = 2
         self.bom_stock = 2
@@ -281,36 +282,39 @@ class Player(Chara):
 
 
     def execute(self, dx, dy, btn_space):
-        # death
-        if self.field_map[self.XY[1]][self.XY[0]] == CH_FIRE:
-            self.dead = True
 #        # put a bom
 #        if len(bom_list) < self.bom_stock:
 #            if field[self.ch_y][self.ch_x] == CH_FREE:
 #                if btn_space == True:
 #                    bom_list.append(Bom(self.ch_x, self.ch_y,self.bom_power))
-        # walking
-        px = self.ch_x+dx
-        py = self.ch_y+dy
-        targ = field[py][px]
-        if not (targ == CH_HARD or targ == CH_SOFT or targ == CH_BOM):
-            self.ch_x += dx
-            self.ch_y += dy
 
-            # item get
-            if targ == CH_ITEM:
-                item_type = item_list[0].get(self.ch_x, self.ch_y)
+        # simulate
+        temp_xy = (self.xy[0]+dx, self.xy[1]+dy)
+        XY = self.field_map.getXY(temp_xy)
+        targ = self.field_map.get(XY)
 
-                if item_type == ITEM_FIRE:
-                    self.bom_power += 1
-                elif item_type == ITEM_BOM:
-                    self.bom_stock += 1
+        if targ == CH_FIRE:
+            # death
+            self.dead = True
+        elif not (targ == Type.HARD or targ == Type.SOFT or targ == Type.BOM):
+            # walking
+            self.xy[0] += dx
+            self.xy[1] += dy
+
+#            # item get
+#            if targ == Type.ITEM:
+#                item_type = item_list[0].get(self.ch_x, self.ch_y)
+#
+#                if item_type == ITEM_FIRE:
+#                    self.bom_power += 1
+#                elif item_type == ITEM_BOM:
+#                    self.bom_stock += 1
         
     def draw(self):
         pygame.draw.circle(
             screen,
             (255,255,255),
-            (self.ch_x * CHIPSIZE + CHIPSIZE/2,self.ch_y * CHIPSIZE + CHIPSIZE/2),
+            (self.xy[0],self.xy[1]),
             0.8*CHIPSIZE/2
             )
 
@@ -606,6 +610,8 @@ if __name__ == "__main__":
 
     fmap = FieldMap()
     
+    player = Player((1,1),fmap)
+
 
 
     running = True
@@ -615,6 +621,8 @@ if __name__ == "__main__":
         #print(keystate)
         #fmap.disp()
         drawWorld(fmap)
+        player.draw()
+
         pygame.display.flip()
         fpsClock.tick(FPS)
 
