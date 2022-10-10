@@ -288,6 +288,15 @@ class Player(Chara):
         self.bom_stock = 2
         self.dead = False
 
+    def isMovable(self,pos):
+        WIDTH = int(CHIPSIZE*0.8/2)
+        tp = pos % CHIPSIZE
+        pmin,pmax = tp-WIDTH,tp+WIDTH
+        #print(f"{pmin},{pmax}")
+        if pmin <= 0 or CHIPSIZE-1 < pmax:
+            return False
+        return True
+
     def readKey(self,keystate):
         dx,dy = (0,0)
         if key == KeyInput.RIGHT:
@@ -301,7 +310,9 @@ class Player(Chara):
         #print(f"{self.XY},{temp_XY},{targ}")
         #print(f"({dx},{dy})")
         #targ = Type.FREE
-        return dx,dy
+        temp_XY = (self.XY[0]+dx,self.XY[1]+dy)
+        targ = self.field_map.get(temp_XY)
+        return dx,dy,targ
 
     def control(self, key):
 #        # put a bom
@@ -311,7 +322,7 @@ class Player(Chara):
 #                    bom_list.append(Bom(self.ch_x, self.ch_y,self.bom_power))
 
         # moved position
-        dx,dy = self.readKey(key)
+        dx,dy,targ = self.readKey(key)
 
         if targ == CH_FIRE:
             # death
@@ -320,6 +331,7 @@ class Player(Chara):
             # walking
             self.xy = (self.xy[0] + dx, self.xy[1] + dy)
             self.XY = self.field_map.getXY(self.xy)
+            
 
 #            # item get
 #            if targ == Type.ITEM:
