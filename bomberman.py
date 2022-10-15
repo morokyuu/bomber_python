@@ -89,19 +89,32 @@ BOM_TIMEOUT_FRAME = 100
 FIRE_FRAME = 30
 
 
-def print_field():
-    for f in field:
-        print(f)
 
-class Chara:
+## feature-ex1-tasklist
+## MEMO
+## すべての要素をゲームタスクというインターフェースでタスクリストに登録する
+## FieldMapはCharaというタスクの一種にする。
+class GameTask:
+    def __init__(self):
+        self.priority = priority
+        pass
+    def exec(self):
+        pass
+
+class BackGround(GameTask):
+    def __init__(self):
+        pass
+    def draw(self):
+        pass
+
+class Chara(GameTask):
     def __init__(self,XY,chType,field_map):
         self.XY = XY
         self.chType = chType
         self.field_map = field_map
         self.dead = False
-    def disp(self):
-        pass
-    def act(self):
+
+    def draw(self):
         pass
         
 
@@ -137,6 +150,7 @@ class Item(Chara):
 class Block(Chara):
     def __init__(self, XY, field_map,item_type=ITEM_NONE):
         super().__init__(XY,Type.SOFT,field_map)
+        fmap.put(XY,Type.SOFT)
         self.item_type = item_type
 
     def execute(self):
@@ -145,15 +159,6 @@ class Block(Chara):
     def draw(self):
         pygame.draw.rect(screen, CL_SOFT, (self.XY[0]*CHIPSIZE, self.XY[1]*CHIPSIZE, 32,32))
 
-class HardBlock(Chara):
-    def __init__(self, XY, field_map):
-        super().__init__(XY,Type.HARD,field_map)
-
-    def execute(self):
-        return 
-    
-    def draw(self):
-        pygame.draw.rect(screen, CL_HARD, (self.XY[0]*CHIPSIZE, self.XY[1]*CHIPSIZE, 32,32))
 
 class oldBom():
     def __init__(self, ch_x, ch_y, power):
@@ -392,13 +397,6 @@ class Player(Chara):
 
 
 
-def drawWorld(field_map):
-    for Y,line in enumerate(field_map.field):
-        for X,f in enumerate(line):
-            if f == Type.FREE:
-                pygame.draw.rect(screen, CL_FREE, (X*CHIPSIZE, Y*CHIPSIZE, 32,32))
-            elif f == Type.HARD:
-                pygame.draw.rect(screen, CL_HARD, (X*CHIPSIZE, Y*CHIPSIZE, 32,32))
 
 
 def drawChip(type,x,y):
@@ -608,11 +606,10 @@ def st_title_loop(running, gamestate):
     
     return running,gamestate
 
-class FieldMap:
+class FieldMap(BackGround):
     def __init__(self):
         self.field = list() #2-dimention
         self._initMap()
-        pass
 
     def put(self,XY,chType):
         self.field[XY[1]][XY[0]] = chType
@@ -643,7 +640,14 @@ class FieldMap:
                     line[i] = Type.FREE
                 field.append(line)
         self.field = field
-        #print(self.field)
+
+    def draw(self):
+        for Y,line in enumerate(self.field):
+            for X,f in enumerate(line):
+                if f == Type.HARD:
+                    pygame.draw.rect(screen, CL_HARD, (X*CHIPSIZE, Y*CHIPSIZE, 32,32))
+                else:
+                    pygame.draw.rect(screen, CL_FREE, (X*CHIPSIZE, Y*CHIPSIZE, 32,32))
         
 #        for i in range(10):
 #            x = random.randint(2, CHIPNUM_W-1)
@@ -693,10 +697,14 @@ if __name__ == "__main__":
     clock = pygame.time.Clock()
 
     fmap = FieldMap()
-    
+
+    task = []
+    task.append(fmap)
+
+    task.append(Block((3,3),fmap))
+
     player = Player((1,1),fmap)
-
-
+    task.append(player)
 
     running = True
     while running:
@@ -704,11 +712,12 @@ if __name__ == "__main__":
         key = keystateToKeyInput(keystate)
 
         screen.fill((0,0,0))
-        #print(keystate)
-        #fmap.disp()
-        drawWorld(fmap)
+
         player.control(key)
-        player.draw()
+
+
+        for t in task:
+            t.draw()
 
         pygame.display.flip()
         fpsClock.tick(FPS)
