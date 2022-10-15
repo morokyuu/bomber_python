@@ -98,7 +98,7 @@ class GameTask:
     def __init__(self):
         self.priority = priority
         pass
-    def exec(self):
+    def execute(self):
         pass
 
 class BackGround(GameTask):
@@ -160,103 +160,96 @@ class Block(Chara):
         pygame.draw.rect(screen, CL_SOFT, (self.XY[0]*CHIPSIZE, self.XY[1]*CHIPSIZE, 32,32))
 
 
-class oldBom():
-    def __init__(self, ch_x, ch_y, power):
-        self.ch_x = ch_x
-        self.ch_y = ch_y
-        field[self.ch_y][self.ch_x] = CH_BOM
+class Bom(Chara):
+    def __init__(self, XY, power, field_map):
+        super().__init__(XY,Type.BOM,field_map)
+        fmap.put(XY,Type.BOM)
+        self.power = power
         self.timer = BOM_TIMEOUT_FRAME
         self.dead = False
-        self.power = power
-        self.size_ratio = [1.0,0.9,0.8,0.9]
+        self.size_ratio = (1.0,0.9,0.8,0.9)
     
-    def explode(self):
-        
-        dx = 0
-        dy = 0
-        
-        px = self.ch_x + dx
-        py = self.ch_y + dy
-        fire_list.append(Fire(px, py))
-        
-        for dx in range(1,self.power+1):
-            dy = 0
-            
-            px = self.ch_x + dx
-            py = self.ch_y + dy
-            
-            if not field[py][px] == CH_HARD:
-                if field[py][px] == CH_FREE:
-                    fire_list.append(Fire(px, py))
-                else:
-                    field[py][px] = CH_FIRE
-                    break
-            else:
-                break
-            
-        for dx in range(1,self.power+1):
-            dy = 0
-            
-            px = self.ch_x - dx
-            py = self.ch_y + dy
-            
-            if not field[py][px] == CH_HARD:
-                if field[py][px] == CH_FREE:
-                    fire_list.append(Fire(px, py))
-                else:
-                    field[py][px] = CH_FIRE
-                    break
-            else:
-                break
-
-        for dy in range(1,self.power+1):
-            dx = 0
-            
-            px = self.ch_x + dx
-            py = self.ch_y + dy
-            
-            if not field[py][px] == CH_HARD:
-                if field[py][px] == CH_FREE:
-                    fire_list.append(Fire(px, py))
-                else:
-                    field[py][px] = CH_FIRE
-                    break
-            else:
-                break
-            
-        for dy in range(1,self.power+1):
-            dx = 0
-            
-            px = self.ch_x + dx
-            py = self.ch_y - dy
-            
-            if not field[py][px] == CH_HARD:
-                if field[py][px] == CH_FREE:
-                    fire_list.append(Fire(px, py))
-                else:
-                    field[py][px] = CH_FIRE
-                    break
-            else:
-                break
+#    def explode(self):
+#        for dx in range(1,self.power+1):
+#            dy = 0
+#            
+#            px = self.ch_x + dx
+#            py = self.ch_y + dy
+#            
+#            if not field[py][px] == CH_HARD:
+#                if field[py][px] == CH_FREE:
+#                    fire_list.append(Fire(px, py))
+#                else:
+#                    field[py][px] = CH_FIRE
+#                    break
+#            else:
+#                break
+#            
+#        for dx in range(1,self.power+1):
+#            dy = 0
+#            
+#            px = self.ch_x - dx
+#            py = self.ch_y + dy
+#            
+#            if not field[py][px] == CH_HARD:
+#                if field[py][px] == CH_FREE:
+#                    fire_list.append(Fire(px, py))
+#                else:
+#                    field[py][px] = CH_FIRE
+#                    break
+#            else:
+#                break
+#
+#        for dy in range(1,self.power+1):
+#            dx = 0
+#            
+#            px = self.ch_x + dx
+#            py = self.ch_y + dy
+#            
+#            if not field[py][px] == CH_HARD:
+#                if field[py][px] == CH_FREE:
+#                    fire_list.append(Fire(px, py))
+#                else:
+#                    field[py][px] = CH_FIRE
+#                    break
+#            else:
+#                break
+#            
+#        for dy in range(1,self.power+1):
+#            dx = 0
+#            
+#            px = self.ch_x + dx
+#            py = self.ch_y - dy
+#            
+#            if not field[py][px] == CH_HARD:
+#                if field[py][px] == CH_FREE:
+#                    fire_list.append(Fire(px, py))
+#                else:
+#                    field[py][px] = CH_FIRE
+#                    break
+#            else:
+#                break
 
     def execute(self):
         # timer overflow
         self.timer -= 1
         if self.timer < 0:
             self.dead = True
-            self.explode()
+#            self.explode()
+            print("explode")
         # in an explosion
-        if field[self.ch_y][self.ch_x] == CH_FIRE:
-            self.dead = True
-            self.explode()
+#        if field[self.ch_y][self.ch_x] == CH_FIRE:
+#            self.dead = True
+#            self.explode()
+            print("explode")
         
     def draw(self):
-        pygame.draw.rect(screen, CL_FREE, (self.ch_x * CHIPSIZE,self.ch_y * CHIPSIZE,32,32))
-        
+        #pygame.draw.rect(screen, CL_FREE, (self.XY[0] * CHIPSIZE, self.XY[1] * CHIPSIZE,32,32))
         pygame.draw.circle(
             screen,
             (0,0,0),
-            (self.ch_x * CHIPSIZE+CHIPSIZE/2,self.ch_y * CHIPSIZE+CHIPSIZE/2),
+            (int(CHIPSIZE*(self.XY[0]+1/2)),
+             int(CHIPSIZE*(self.XY[1]+1/2))),
             CHIPSIZE/2 * self.size_ratio[int(self.timer / 7 % 4)])
 
 class Fire():
@@ -706,6 +699,8 @@ if __name__ == "__main__":
     player = Player((1,1),fmap)
     task.append(player)
 
+    task.append(Bom((5,5),2,fmap))
+
     running = True
     while running:
         running,keystate = keyInput()
@@ -717,6 +712,7 @@ if __name__ == "__main__":
 
 
         for t in task:
+            t.execute()
             t.draw()
 
         pygame.display.flip()
