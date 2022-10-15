@@ -160,12 +160,11 @@ class Block(Chara):
         pygame.draw.rect(screen, CL_SOFT, (self.XY[0]*CHIPSIZE, self.XY[1]*CHIPSIZE, 32,32))
 
 
-class Bom():
+class Bom(Chara):
     def __init__(self, XY, power, field_map):
-        self.XY = XY
+        super().__init__(XY,Type.BOM,field_map)
+        fmap.put(XY,Type.BOM)
         self.power = power
-        self.field_map = field_map
-
         self.timer = BOM_TIMEOUT_FRAME
         self.dead = False
         self.size_ratio = (1.0,0.9,0.8,0.9)
