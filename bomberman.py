@@ -19,7 +19,7 @@ https://uxmilk.jp/15665
 import pygame
 from pygame.locals import *
 import random
-from enum import Enum
+from enum import Enum,auto
 
 # field value
 CH_FREE = 0
@@ -29,6 +29,14 @@ CH_SOFT = 3
 CH_BOM = 4
 CH_ITEM = 5
 
+class KeyInput(Enum):
+    NONE = auto()
+    UP = auto()
+    DOWN = auto()
+    RIGHT = auto()
+    LEFT = auto()
+    PUTBOM = auto()
+
 class Type(Enum):
     FREE = 0
     FIRE = 1
@@ -36,6 +44,7 @@ class Type(Enum):
     SOFT = 3
     BOM = 4
     ITEM = 5
+    PLAYER = 6
 
 # item type
 ITEM_NONE = 0
@@ -270,48 +279,113 @@ class Fire():
             CHIPSIZE/2)
         
         
-class Player:
-    def __init__(self,ch_x, ch_y):
-        self.ch_x = ch_x #atari hantei position
-        self.ch_y = ch_y
+class Player(Chara):
+    def __init__(self,XY,field_map):
+        super().__init__(XY,Type.PLAYER,field_map)
+        self.xy = field_map.getxy(XY)
         # game variable
         self.bom_power = 2
         self.bom_stock = 2
-        # self.x = self.ch_x / CHIPSIZE
-        # self.y = self.ch_y / CHIPSIZE
         self.dead = False
 
-    def execute(self, dx, dy, btn_space):
-        # death
-        if field[self.ch_y][self.ch_x] == CH_FIRE:
+    def isMovable(self,pos):
+        WIDTH = int(CHIPSIZE*0.8/2)
+        tp = pos % CHIPSIZE
+        pmin,pmax = tp-WIDTH,tp+WIDTH
+        #print(f"{pmin},{pmax}")
+        if pmin <= 0 or CHIPSIZE-1 < pmax:
+            return False
+        return True
+
+    def readKey(self,keystate):
+        DX,DY = (0,0)
+        if key == KeyInput.RIGHT:
+            DX = 1
+        elif key == KeyInput.LEFT:
+            DX = -1
+        elif key == KeyInput.UP:
+            DY = -1
+        elif key == KeyInput.DOWN:
+            DY = 1
+        return DX,DY
+
+    def control(self, key):
+#        # put a bom
+#        if len(bom_list) < self.bom_stock:
+#            if field[self.ch_y][self.ch_x] == CH_FREE:
+#                if btn_space == True:
+#                    bom_list.append(Bom(self.ch_x, self.ch_y,self.bom_power))
+
+        # moved position
+        DX,DY = self.readKey(key)
+        nextXY = (self.XY[0]+DX, self.XY[1]+DY)
+        targ = self.field_map.get((nextXY))
+        
+        center_x,center_y =(int(CHIPSIZE*(self.XY[0]+1/2)),
+                            int(CHIPSIZE*(self.XY[1]+1/2)))
+        x,y = self.xy[0],self.xy[1]
+
+        speed = 2.3
+        delta_x,delta_y = int(DX*speed),int(DY*speed)
+
+
+        if targ == Type.FIRE:
+            # death
             self.dead = True
-        # put a bom
-        if len(bom_list) < self.bom_stock:
-            if field[self.ch_y][self.ch_x] == CH_FREE:
-                if btn_space == True:
-                    bom_list.append(Bom(self.ch_x, self.ch_y,self.bom_power))
-        # walking
-        px = self.ch_x+dx
-        py = self.ch_y+dy
-        targ = field[py][px]
-        if not (targ == CH_HARD or targ == CH_SOFT or targ == CH_BOM):
-            self.ch_x += dx
-            self.ch_y += dy
+        elif targ == Type.FREE:
+            # sliding at corner
+            if DX > 0 and y < center_y:
+                self.xy = (x          ,y + delta_x)
+            elif DX < 0 and y < center_y:
+                self.xy = (x          ,y - delta_x)
+            elif DX > 0 and y > center_y:
+                self.xy = (x          ,y - delta_x)
+            elif DX < 0 and y > center_y:
+                self.xy = (x          ,y + delta_x)
 
-            # item get
-            if targ == CH_ITEM:
-                item_type = item_list[0].get(self.ch_x, self.ch_y)
+            elif DY > 0 and x < center_x:
+                self.xy = (x + delta_y,          y)
+            elif DY < 0 and x < center_x:
+                self.xy = (x - delta_y,          y)
+            elif DY > 0 and x > center_x:
+                self.xy = (x - delta_y,          y)
+            elif DY < 0 and x > center_x:
+                self.xy = (x + delta_y,          y)
 
-                if item_type == ITEM_FIRE:
-                    self.bom_power += 1
-                elif item_type == ITEM_BOM:
-                    self.bom_stock += 1
+            else:
+                self.xy = (x + delta_x,y + delta_y)
+        else:
+            # clip by obstacle
+            if DX < 0:
+                self.xy = (max(x + delta_x, center_x),
+                           y + delta_y)
+            elif DX > 0:
+                self.xy = (min(x + delta_x, center_x),
+                           y + delta_y)
+            elif DY < 0:
+                self.xy = (x + delta_x,
+                           max(y + delta_y, center_y))
+            elif DY > 0:
+                self.xy = (x + delta_x,
+                           min(y + delta_y, center_y))
+
+        self.XY = self.field_map.getXY(self.xy)
+        #print(f"{self.xy},{self.XY}")
+
+#            # item get
+#            if targ == Type.ITEM:
+#                item_type = item_list[0].get(self.ch_x, self.ch_y)
+#
+#                if item_type == ITEM_FIRE:
+#                    self.bom_power += 1
+#                elif item_type == ITEM_BOM:
+#                    self.bom_stock += 1
         
     def draw(self):
         pygame.draw.circle(
             screen,
             (255,255,255),
-            (self.ch_x * CHIPSIZE + CHIPSIZE/2,self.ch_y * CHIPSIZE + CHIPSIZE/2),
+            (self.xy[0],self.xy[1]),
             0.8*CHIPSIZE/2
             )
 
@@ -546,6 +620,14 @@ class FieldMap:
     def get(self,XY):
         return self.field[XY[1]][XY[0]]
 
+    def getXY(self,xy):
+        return (xy[0] // CHIPSIZE, xy[1] // CHIPSIZE)
+
+    def getxy(self,XY):
+        offset = CHIPSIZE//2
+        return (XY[0] * CHIPSIZE + offset,
+                XY[1] * CHIPSIZE + offset)
+
     def _initMap(self):
         for i in range(CHIPNUM_H):
             if i == 0 or i == CHIPNUM_H-1:
@@ -588,6 +670,19 @@ def keyInput():
     keystate = pygame.key.get_pressed()
     return running,keystate
 
+# 他の入力装置の時に置き換えが効くように
+# キーボード入力をEnumに置き換える。
+def keystateToKeyInput(keystate):
+    key = KeyInput.NONE
+    if keystate[pygame.K_RIGHT]:
+        key = KeyInput.RIGHT
+    elif keystate[pygame.K_LEFT]:
+        key = KeyInput.LEFT
+    elif keystate[pygame.K_UP]:
+        key = KeyInput.UP
+    elif keystate[pygame.K_DOWN]:
+        key = KeyInput.DOWN
+    return key
 
 ####################################################################
 
@@ -599,15 +694,22 @@ if __name__ == "__main__":
 
     fmap = FieldMap()
     
+    player = Player((1,1),fmap)
+
 
 
     running = True
     while running:
         running,keystate = keyInput()
+        key = keystateToKeyInput(keystate)
+
         screen.fill((0,0,0))
         #print(keystate)
         #fmap.disp()
         drawWorld(fmap)
+        player.control(key)
+        player.draw()
+
         pygame.display.flip()
         fpsClock.tick(FPS)
 
