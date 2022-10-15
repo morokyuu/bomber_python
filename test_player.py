@@ -10,20 +10,9 @@ class Test_Player(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_isMovable(self):
-        WIDTH = int(bm.CHIPSIZE*0.8/2)
-
-        flag = self.player.isMovable(int(bm.CHIPSIZE*0.1))
-        self.assertEqual(flag, False, "judgement is invalid.")
-        flag = self.player.isMovable(int(bm.CHIPSIZE*0.9))
-        self.assertEqual(flag, False, "judgement is invalid.")
-        flag = self.player.isMovable(bm.CHIPSIZE//2)
-        self.assertEqual(flag, True, "judgement is invalid.")
-
-        flag = self.player.isMovable(bm.CHIPSIZE*3 + int(bm.CHIPSIZE*0.1))
-        self.assertEqual(flag, False, "judgement is invalid.")
-        flag = self.player.isMovable(bm.CHIPSIZE*3 + int(bm.CHIPSIZE*0.9))
-        self.assertEqual(flag, False, "judgement is invalid.")
+    def test_movement(self):
+        flag = self.player.control()
+        self.assertEqual(flag, False, "movement incorrect")
 
 if __name__ == '__main__':
     unittest.main()

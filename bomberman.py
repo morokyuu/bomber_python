@@ -282,32 +282,24 @@ class Player(Chara):
         super().__init__(XY,Type.PLAYER,field_map)
         self.xy = field_map.getxy(XY)
         # game variable
+        self.speed = 2.3
         self.bom_power = 2
         self.bom_stock = 2
         self.dead = False
 
-    def isMovable(self,pos):
-        WIDTH = int(CHIPSIZE*0.8/2)
-        tp = pos % CHIPSIZE
-        pmin,pmax = tp-WIDTH,tp+WIDTH
-        #print(f"{pmin},{pmax}")
-        if pmin <= 0 or CHIPSIZE-1 < pmax:
-            return False
-        return True
-
-    def readKey(self,keystate):
+    def _key2command(self,key_input):
         DX,DY = (0,0)
-        if key == KeyInput.RIGHT:
+        if key_input == KeyInput.RIGHT:
             DX = 1
-        elif key == KeyInput.LEFT:
+        elif key_input == KeyInput.LEFT:
             DX = -1
-        elif key == KeyInput.UP:
+        elif key_input == KeyInput.UP:
             DY = -1
-        elif key == KeyInput.DOWN:
+        elif key_input == KeyInput.DOWN:
             DY = 1
         return DX,DY
 
-    def control(self, key):
+    def control(self, key_input):
 #        # put a bom
 #        if len(bom_list) < self.bom_stock:
 #            if field[self.ch_y][self.ch_x] == CH_FREE:
@@ -315,7 +307,7 @@ class Player(Chara):
 #                    bom_list.append(Bom(self.ch_x, self.ch_y,self.bom_power))
 
         # moved position
-        DX,DY = self.readKey(key)
+        DX,DY = self._key2command(key_input)
         nextXY = (self.XY[0]+DX, self.XY[1]+DY)
         targ = self.field_map.get((nextXY))
         
@@ -323,8 +315,7 @@ class Player(Chara):
                             int(CHIPSIZE*(self.XY[1]+1/2)))
         x,y = self.xy[0],self.xy[1]
 
-        speed = 2.3
-        delta_x,delta_y = int(DX*speed),int(DY*speed)
+        delta_x,delta_y = int(DX*self.speed),int(DY*self.speed)
 
 
         if targ == Type.FIRE:
@@ -656,17 +647,6 @@ class FieldMap(BackGround):
 
 
 
-def keyInput():
-    running = True
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:
-                running = False
-    keystate = pygame.key.get_pressed()
-    return running,keystate
-
 # 他の入力装置の時に置き換えが効くように
 # キーボード入力をEnumに置き換える。
 def keystateToKeyInput(keystate):
@@ -680,6 +660,18 @@ def keystateToKeyInput(keystate):
     elif keystate[pygame.K_DOWN]:
         key = KeyInput.DOWN
     return key
+
+def read_keyboard():
+    running = True
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                running = False
+    keystate = pygame.key.get_pressed()
+    return running,keystateToKeyInput(keystate)
+
 
 ####################################################################
 
@@ -703,12 +695,11 @@ if __name__ == "__main__":
 
     running = True
     while running:
-        running,keystate = keyInput()
-        key = keystateToKeyInput(keystate)
+        running,key_input = read_keyboard()
 
         screen.fill((0,0,0))
 
-        player.control(key)
+        player.control(key_input)
 
 
         for t in task:
