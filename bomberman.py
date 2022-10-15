@@ -298,21 +298,16 @@ class Player(Chara):
         return True
 
     def readKey(self,keystate):
-        dx,dy = (0,0)
+        DX,DY = (0,0)
         if key == KeyInput.RIGHT:
-            dx = 1
+            DX = 1
         elif key == KeyInput.LEFT:
-            dx = -1
+            DX = -1
         elif key == KeyInput.UP:
-            dy = -1
+            DY = -1
         elif key == KeyInput.DOWN:
-            dy = 1
-        #print(f"{self.XY},{temp_XY},{targ}")
-        #print(f"({dx},{dy})")
-        #targ = Type.FREE
-        temp_XY = (self.XY[0]+dx,self.XY[1]+dy)
-        targ = self.field_map.get(temp_XY)
-        return dx,dy,targ
+            DY = 1
+        return DX,DY
 
     def control(self, key):
 #        # put a bom
@@ -322,16 +317,60 @@ class Player(Chara):
 #                    bom_list.append(Bom(self.ch_x, self.ch_y,self.bom_power))
 
         # moved position
-        dx,dy,targ = self.readKey(key)
+        DX,DY = self.readKey(key)
+        nextXY = (self.XY[0]+DX, self.XY[1]+DY)
+        targ = self.field_map.get((nextXY))
+        
+        center_x,center_y =(int(CHIPSIZE*(self.XY[0]+1/2)),
+                            int(CHIPSIZE*(self.XY[1]+1/2)))
+        x,y = self.xy[0],self.xy[1]
 
-        if targ == CH_FIRE:
+        speed = 2.3
+        delta_x,delta_y = int(DX*speed),int(DY*speed)
+
+
+        if targ == Type.FIRE:
             # death
             self.dead = True
-        elif not (targ == Type.HARD or targ == Type.SOFT or targ == Type.BOM):
-            # walking
-            self.xy = (self.xy[0] + dx, self.xy[1] + dy)
-            self.XY = self.field_map.getXY(self.xy)
-            
+        elif targ == Type.FREE:
+            # sliding at corner
+            if DX > 0 and y < center_y:
+                self.xy = (x          ,y + delta_x)
+            elif DX < 0 and y < center_y:
+                self.xy = (x          ,y - delta_x)
+            elif DX > 0 and y > center_y:
+                self.xy = (x          ,y - delta_x)
+            elif DX < 0 and y > center_y:
+                self.xy = (x          ,y + delta_x)
+
+            elif DY > 0 and x < center_x:
+                self.xy = (x + delta_y,          y)
+            elif DY < 0 and x < center_x:
+                self.xy = (x - delta_y,          y)
+            elif DY > 0 and x > center_x:
+                self.xy = (x - delta_y,          y)
+            elif DY < 0 and x > center_x:
+                self.xy = (x + delta_y,          y)
+
+            else:
+                self.xy = (x + delta_x,y + delta_y)
+        else:
+            # clip by obstacle
+            if DX < 0:
+                self.xy = (max(x + delta_x, center_x),
+                           y + delta_y)
+            elif DX > 0:
+                self.xy = (min(x + delta_x, center_x),
+                           y + delta_y)
+            elif DY < 0:
+                self.xy = (x + delta_x,
+                           max(y + delta_y, center_y))
+            elif DY > 0:
+                self.xy = (x + delta_x,
+                           min(y + delta_y, center_y))
+
+        self.XY = self.field_map.getXY(self.xy)
+        #print(f"{self.xy},{self.XY}")
 
 #            # item get
 #            if targ == Type.ITEM:
