@@ -37,6 +37,12 @@ class KeyInput(Enum):
     LEFT = auto()
     PUTBOM = auto()
 
+class Priority(Enum):
+    FIELD = 0
+    PLAYER = 1
+    BOM = 2
+    FIRE = 3
+
 class Type(Enum):
     FREE = 0
     FIRE = 1
@@ -95,24 +101,26 @@ FIRE_FRAME = 30
 ## すべての要素をゲームタスクというインターフェースでタスクリストに登録する
 ## FieldMapはCharaというタスクの一種にする。
 class GameTask:
-    def __init__(self):
+    def __init__(self,priority):
+        self.dead = False
         self.priority = priority
         pass
     def execute(self):
         pass
 
 class BackGround(GameTask):
-    def __init__(self):
+    def __init__(self,priority):
+        super().__init__(priority)
         pass
     def draw(self):
         pass
 
 class Chara(GameTask):
-    def __init__(self,XY,chType,field_map):
+    def __init__(self,XY,chType,field_map,priority):
+        super().__init__(priority)
         self.XY = XY
         self.chType = chType
         self.field_map = field_map
-        self.dead = False
 
     def draw(self):
         pass
@@ -149,7 +157,7 @@ class Item(Chara):
 
 class Block(Chara):
     def __init__(self, XY, field_map,item_type=ITEM_NONE):
-        super().__init__(XY,Type.SOFT,field_map)
+        super().__init__(XY,Type.SOFT,field_map,Priority.BOM)
         field_map.put(XY,Type.SOFT)
         self.item_type = item_type
 
@@ -162,7 +170,7 @@ class Block(Chara):
 
 class Bom(Chara):
     def __init__(self, XY, power, field_map):
-        super().__init__(XY,Type.BOM,field_map)
+        super().__init__(XY,Type.BOM,field_map,Priority.BOM)
         fmap.put(XY,Type.BOM)
         self.power = power
         self.timer = BOM_TIMEOUT_FRAME
@@ -241,7 +249,6 @@ class Bom(Chara):
 #        if field[self.ch_y][self.ch_x] == CH_FIRE:
 #            self.dead = True
 #            self.explode()
-            print("explode")
         
     def draw(self):
         #pygame.draw.rect(screen, CL_FREE, (self.XY[0] * CHIPSIZE, self.XY[1] * CHIPSIZE,32,32))
@@ -279,10 +286,10 @@ class Fire():
         
 class Player(Chara):
     def __init__(self,XY,field_map):
-        super().__init__(XY,Type.PLAYER,field_map)
+        super().__init__(XY,Type.PLAYER,field_map,Priority.PLAYER)
         self.xy = field_map.getxy(XY)
         # game variable
-        self.speed = 1
+        self.speed = 2
         self.bom_power = 2
         self.bom_stock = 2
         self.dead = False
@@ -297,17 +304,23 @@ class Player(Chara):
             DY = -1
         elif key_input == KeyInput.DOWN:
             DY = 1
-        return DX,DY
+
+        if key_input == KeyInput.PUTBOM:
+            PUT = True
+        PUT = False
+
+        return DX,DY,PUT
 
     def control(self, key_input):
-#        # put a bom
-#        if len(bom_list) < self.bom_stock:
-#            if field[self.ch_y][self.ch_x] == CH_FREE:
-#                if btn_space == True:
-#                    bom_list.append(Bom(self.ch_x, self.ch_y,self.bom_power))
+        DX,DY,PUT = self._key2command(key_input)
+
+        # put a bom
+        if self.field_map.get(self.XY) == CH_FREE:
+            if PUT:
+                print("put")
+                self.field_map.put(Bom(self.XY,self.bom_power,self.field_map))
 
         # moved position
-        DX,DY = self._key2command(key_input)
         nextXY = (self.XY[0]+DX, self.XY[1]+DY)
         targ = self.field_map.get((nextXY))
         
@@ -592,6 +605,7 @@ def st_title_loop(running, gamestate):
 
 class FieldMap(BackGround):
     def __init__(self):
+        super().__init__(Priority.FIELD)
         self.field = list() #2-dimention
         self._initMap()
 
@@ -649,6 +663,7 @@ class FieldMap(BackGround):
 
 # 他の入力装置の時に置き換えが効くように
 # キーボード入力をEnumに置き換える。
+# https://www.pygame.org/docs/ref/key.html?highlight=k_right
 def keystateToKeyInput(keystate):
     key = KeyInput.NONE
     if keystate[pygame.K_RIGHT]:
@@ -659,6 +674,9 @@ def keystateToKeyInput(keystate):
         key = KeyInput.UP
     elif keystate[pygame.K_DOWN]:
         key = KeyInput.DOWN
+
+    if keystate[pygame.K_SPACE]:
+        key = KeyInput.PUTBOM
     return key
 
 def read_keyboard():
@@ -705,6 +723,8 @@ if __name__ == "__main__":
         for t in task:
             t.execute()
             t.draw()
+
+        task = list(filter(lambda x:x.dead==False,task))
 
         pygame.display.flip()
         fpsClock.tick(FPS)
