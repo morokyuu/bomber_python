@@ -27,7 +27,7 @@ class Test_Player(unittest.TestCase):
     def test_sliding(self):
 #        self.player.xy = (int(bm.CHIPSIZE*(self.player.XY[0]+1/2)),
 #                          int(bm.CHIPSIZE*(self.player.XY[1]+1/2))-5)
-        self.player.xy = (int(bm.CHIPSIZE*(1+1/2))-5,
+        self.player.xy = (int(bm.CHIPSIZE*(1+1/2))+10,
                           int(bm.CHIPSIZE*(1+1/2)))
         #self.player.control(bm.KeyInput.NONE)
         print("\n sliding at upper-left corner +DY for 10-loop")
@@ -35,12 +35,12 @@ class Test_Player(unittest.TestCase):
         print(f"{self.player.XY}")
         ini_x,ini_y = self.player.xy
         key_input = bm.KeyInput.DOWN
-        LOOP = 10
+        LOOP = 20
         for _ in range(LOOP):
             flag = self.player.control(key_input)
         sim_x = ini_x + self.player.speed * LOOP
-        print(f"{self.player.xy},sim_x = {sim_x}")
-        self.assertEqual(sim_x, self.player.xy[0], "movement incorrect")
+        print(f"{self.player.xy}")
+        self.assertEqual(self.player.xy[0]%(bm.CHIPSIZE//2), 0, "movement incorrect")
 
 if __name__ == '__main__':
     unittest.main()
