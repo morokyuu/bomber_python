@@ -282,7 +282,7 @@ class Player(Chara):
         super().__init__(XY,Type.PLAYER,field_map)
         self.xy = field_map.getxy(XY)
         # game variable
-        self.speed = 2.3
+        self.speed = 1
         self.bom_power = 2
         self.bom_stock = 2
         self.dead = False
