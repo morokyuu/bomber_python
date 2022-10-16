@@ -316,32 +316,31 @@ class Player(Chara):
         self.speed = 2
         self.bom_power = 2
         self.bom_stock = 2
-        self.dead = False
 
     def _key2command(self,key_input):
-        DX,DY = (0,0)
-        if key_input == KeyInput.RIGHT:
+        DX,DY,PUT = (0,0,False)
+
+        if KeyInput.RIGHT in key_input:
             DX = 1
-        elif key_input == KeyInput.LEFT:
+        elif KeyInput.LEFT in key_input:
             DX = -1
-        elif key_input == KeyInput.UP:
+        elif KeyInput.UP in key_input:
             DY = -1
-        elif key_input == KeyInput.DOWN:
+        elif KeyInput.DOWN in key_input:
             DY = 1
 
-        if key_input == KeyInput.PUTBOM:
+        if KeyInput.PUTBOM in key_input:
             PUT = True
-        PUT = False
 
         return DX,DY,PUT
 
     def control(self, key_input):
         DX,DY,PUT = self._key2command(key_input)
+        #print(f"{key_input}=>{DX},{DY},{PUT}")
 
         # put a bom
-        if self.field_map.get(self.XY) == CH_FREE:
-            if PUT:
-                print("put")
+        if PUT:
+            if self.field_map.get(self.XY) == CH_FREE:
                 self.field_map.put(Bom(self.XY,self.bom_power,self.field_map))
 
         # moved position
@@ -693,19 +692,22 @@ class FieldMap(BackGround):
 # キーボード入力をEnumに置き換える。
 # https://www.pygame.org/docs/ref/key.html?highlight=k_right
 def keystateToKeyInput(keystate):
-    key = KeyInput.NONE
+    dirkey = KeyInput.NONE
     if keystate[pygame.K_RIGHT]:
-        key = KeyInput.RIGHT
+        dirkey = KeyInput.RIGHT
     elif keystate[pygame.K_LEFT]:
-        key = KeyInput.LEFT
+        dirkey = KeyInput.LEFT
     elif keystate[pygame.K_UP]:
-        key = KeyInput.UP
+        dirkey = KeyInput.UP
     elif keystate[pygame.K_DOWN]:
-        key = KeyInput.DOWN
+        dirkey = KeyInput.DOWN
 
     if keystate[pygame.K_SPACE]:
         key = KeyInput.PUTBOM
-    return key
+    else:
+        key = KeyInput.NONE
+
+    return (dirkey,key)
 
 def read_keyboard():
     running = True
