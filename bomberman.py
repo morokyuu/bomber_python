@@ -124,7 +124,32 @@ class Chara(GameTask):
 
     def draw(self):
         pass
+
+    def disappear(self):
+        self.dead = True
+        self.field_map.put(self.XY,Type.FREE)
         
+
+class TaskContainer:
+    def __init__(self):
+        self.tasklist = []
+
+    def add(self,gametask):
+        self.tasklist.append(gametask)
+
+    def execute(self):
+        for t in self.tasklist:
+            t.execute()
+
+    def draw(self):
+        for t in self.tasklist:
+            t.draw()
+
+    def terminate(self):
+        self.tasklist = list(filter(lambda x:x.dead==False,self.tasklist))
+
+
+
 
 class Item(Chara):
     def __init__(self, X, Y, item_type):
@@ -174,7 +199,6 @@ class Bom(Chara):
         fmap.put(XY,Type.BOM)
         self.power = power
         self.timer = BOM_TIMEOUT_FRAME
-        self.dead = False
         self.size_ratio = (1.0,0.9,0.8,0.9)
     
 #    def explode(self):
@@ -242,7 +266,7 @@ class Bom(Chara):
         # timer overflow
         self.timer -= 1
         if self.timer < 0:
-            self.dead = True
+            self.disappear()
 #            self.explode()
             print("explode")
         # in an explosion
@@ -292,32 +316,31 @@ class Player(Chara):
         self.speed = 2
         self.bom_power = 2
         self.bom_stock = 2
-        self.dead = False
 
     def _key2command(self,key_input):
-        DX,DY = (0,0)
-        if key_input == KeyInput.RIGHT:
+        DX,DY,PUT = (0,0,False)
+
+        if KeyInput.RIGHT in key_input:
             DX = 1
-        elif key_input == KeyInput.LEFT:
+        elif KeyInput.LEFT in key_input:
             DX = -1
-        elif key_input == KeyInput.UP:
+        elif KeyInput.UP in key_input:
             DY = -1
-        elif key_input == KeyInput.DOWN:
+        elif KeyInput.DOWN in key_input:
             DY = 1
 
-        if key_input == KeyInput.PUTBOM:
+        if KeyInput.PUTBOM in key_input:
             PUT = True
-        PUT = False
 
         return DX,DY,PUT
 
     def control(self, key_input):
         DX,DY,PUT = self._key2command(key_input)
+        #print(f"{key_input}=>{DX},{DY},{PUT}")
 
         # put a bom
-        if self.field_map.get(self.XY) == CH_FREE:
-            if PUT:
-                print("put")
+        if PUT:
+            if self.field_map.get(self.XY) == CH_FREE:
                 self.field_map.put(Bom(self.XY,self.bom_power,self.field_map))
 
         # moved position
@@ -669,19 +692,22 @@ class FieldMap(BackGround):
 # キーボード入力をEnumに置き換える。
 # https://www.pygame.org/docs/ref/key.html?highlight=k_right
 def keystateToKeyInput(keystate):
-    key = KeyInput.NONE
+    dirkey = KeyInput.NONE
     if keystate[pygame.K_RIGHT]:
-        key = KeyInput.RIGHT
+        dirkey = KeyInput.RIGHT
     elif keystate[pygame.K_LEFT]:
-        key = KeyInput.LEFT
+        dirkey = KeyInput.LEFT
     elif keystate[pygame.K_UP]:
-        key = KeyInput.UP
+        dirkey = KeyInput.UP
     elif keystate[pygame.K_DOWN]:
-        key = KeyInput.DOWN
+        dirkey = KeyInput.DOWN
 
     if keystate[pygame.K_SPACE]:
         key = KeyInput.PUTBOM
-    return key
+    else:
+        key = KeyInput.NONE
+
+    return (dirkey,key)
 
 def read_keyboard():
     running = True
@@ -703,17 +729,15 @@ if __name__ == "__main__":
     pygame.display.set_caption("bomber man")
     clock = pygame.time.Clock()
 
+    tc = TaskContainer()
     fmap = FieldMap()
-
-    task = []
-    task.append(fmap)
-
-    task.append(Block((3,3),fmap))
+    tc.add(fmap)
+    tc.add(Block((3,3),fmap))
 
     player = Player((1,1),fmap)
-    task.append(player)
+    tc.add(player)
 
-    task.append(Bom((5,5),2,fmap))
+    tc.add(Bom((5,5),2,fmap))
 
     running = True
     while running:
@@ -723,12 +747,11 @@ if __name__ == "__main__":
 
         player.control(key_input)
 
+        tc.execute()
+        tc.draw()
 
-        for t in task:
-            t.execute()
-            t.draw()
 
-        task = list(filter(lambda x:x.dead==False,task))
+        tc.terminate()
 
         pygame.display.flip()
         fpsClock.tick(FPS)
