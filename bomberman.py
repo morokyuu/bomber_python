@@ -21,13 +21,6 @@ from pygame.locals import *
 import random
 from enum import Enum,auto
 
-# field value
-CH_FREE = 0
-CH_FIRE = 1
-CH_HARD = 2
-CH_SOFT = 3
-CH_BOM = 4
-CH_ITEM = 5
 
 class KeyInput(Enum):
     NONE = auto()
@@ -37,11 +30,7 @@ class KeyInput(Enum):
     LEFT = auto()
     PUTBOM = auto()
 
-class Priority(Enum):
-    FIELD = 0
-    PLAYER = 1
-    BOM = 2
-    FIRE = 3
+Priority = Enum("Priority", "FIELD FIRE BLOCK BOM PLAYER")
 
 class Type(Enum):
     FREE = 0
@@ -127,7 +116,7 @@ class Chara(GameTask):
 
     def disappear(self):
         self.dead = True
-        self.field_map.put(self.XY,Type.FREE)
+        self.field_map.putType(self.XY,Type.FREE)
         
 
 class TaskContainer:
@@ -135,13 +124,20 @@ class TaskContainer:
         self.tasklist = []
 
     def add(self,gametask):
+        print("add tasklist")
         self.tasklist.append(gametask)
+
+    def debug(self):
+        for t in self.tasklist:
+            print(t.priority,end=",")
+        print("")
 
     def execute(self):
         for t in self.tasklist:
             t.execute()
 
     def draw(self):
+        self.tasklist = sorted(self.tasklist,key=lambda x: x.priority.value)
         for t in self.tasklist:
             t.draw()
 
@@ -182,8 +178,9 @@ class Item(Chara):
 
 class Block(Chara):
     def __init__(self, XY, field_map,item_type=ITEM_NONE):
-        super().__init__(XY,Type.SOFT,field_map,Priority.BOM)
-        field_map.put(XY,Type.SOFT)
+        super().__init__(XY,Type.SOFT,field_map,Priority.BLOCK)
+        #print(f"constructor Block {XY}")
+        field_map.putType(XY,self.chType)
         self.item_type = item_type
 
     def execute(self):
@@ -196,7 +193,8 @@ class Block(Chara):
 class Bom(Chara):
     def __init__(self, XY, power, field_map):
         super().__init__(XY,Type.BOM,field_map,Priority.BOM)
-        fmap.put(XY,Type.BOM)
+        #print(f"constructor BOM {XY}")
+        field_map.putType(XY,self.chType)
         self.power = power
         self.timer = BOM_TIMEOUT_FRAME
         self.size_ratio = (1.0,0.9,0.8,0.9)
@@ -316,33 +314,32 @@ class Player(Chara):
         self.speed = 2
         self.bom_power = 2
         self.bom_stock = 2
-        self.dead = False
 
     def _key2command(self,key_input):
-        DX,DY = (0,0)
-        if key_input == KeyInput.RIGHT:
+        DX,DY,PUT = (0,0,False)
+
+        if KeyInput.RIGHT in key_input:
             DX = 1
-        elif key_input == KeyInput.LEFT:
+        elif KeyInput.LEFT in key_input:
             DX = -1
-        elif key_input == KeyInput.UP:
+        elif KeyInput.UP in key_input:
             DY = -1
-        elif key_input == KeyInput.DOWN:
+        elif KeyInput.DOWN in key_input:
             DY = 1
 
-        if key_input == KeyInput.PUTBOM:
+        if KeyInput.PUTBOM in key_input:
             PUT = True
-        PUT = False
 
         return DX,DY,PUT
 
     def control(self, key_input):
         DX,DY,PUT = self._key2command(key_input)
+        #print(f"{key_input}=>{DX},{DY},{PUT}")
 
         # put a bom
-        if self.field_map.get(self.XY) == CH_FREE:
-            if PUT:
-                print("put")
-                self.field_map.put(Bom(self.XY,self.bom_power,self.field_map))
+        if PUT:
+            if self.field_map.get(self.XY) == Type.FREE:
+                self.field_map.putChara(Bom(self.XY,self.bom_power,self.field_map))
 
         # moved position
         nextXY = (self.XY[0]+DX, self.XY[1]+DY)
@@ -408,9 +405,11 @@ class Player(Chara):
 #                    self.bom_stock += 1
         
     def draw(self):
+        #debug use
         pygame.draw.rect(screen,
                 (100,100,0),
                 (self.XY[0]*CHIPSIZE,self.XY[1]*CHIPSIZE,CHIPSIZE,CHIPSIZE),
+                width=3
                 )
         pygame.draw.circle(
             screen,
@@ -632,13 +631,17 @@ def st_title_loop(running, gamestate):
     return running,gamestate
 
 class FieldMap(BackGround):
-    def __init__(self):
+    def __init__(self,taskcontainer):
         super().__init__(Priority.FIELD)
+        self.taskcontainer = taskcontainer
         self.field = list() #2-dimention
         self._initMap()
 
-    def put(self,XY,chType):
+    def putType(self,XY,chType):
         self.field[XY[1]][XY[0]] = chType
+
+    def putChara(self,chara):
+        self.taskcontainer.add(chara)
 
     def get(self,XY):
         return self.field[XY[1]][XY[0]]
@@ -693,19 +696,22 @@ class FieldMap(BackGround):
 # キーボード入力をEnumに置き換える。
 # https://www.pygame.org/docs/ref/key.html?highlight=k_right
 def keystateToKeyInput(keystate):
-    key = KeyInput.NONE
+    dirkey = KeyInput.NONE
     if keystate[pygame.K_RIGHT]:
-        key = KeyInput.RIGHT
+        dirkey = KeyInput.RIGHT
     elif keystate[pygame.K_LEFT]:
-        key = KeyInput.LEFT
+        dirkey = KeyInput.LEFT
     elif keystate[pygame.K_UP]:
-        key = KeyInput.UP
+        dirkey = KeyInput.UP
     elif keystate[pygame.K_DOWN]:
-        key = KeyInput.DOWN
+        dirkey = KeyInput.DOWN
 
     if keystate[pygame.K_SPACE]:
         key = KeyInput.PUTBOM
-    return key
+    else:
+        key = KeyInput.NONE
+
+    return (dirkey,key)
 
 def read_keyboard():
     running = True
@@ -728,14 +734,12 @@ if __name__ == "__main__":
     clock = pygame.time.Clock()
 
     tc = TaskContainer()
-    fmap = FieldMap()
+    fmap = FieldMap(tc)
     tc.add(fmap)
     tc.add(Block((3,3),fmap))
 
     player = Player((1,1),fmap)
     tc.add(player)
-
-    tc.add(Bom((5,5),2,fmap))
 
     running = True
     while running:
@@ -745,6 +749,7 @@ if __name__ == "__main__":
 
         player.control(key_input)
 
+        tc.debug()
         tc.execute()
         tc.draw()
 
