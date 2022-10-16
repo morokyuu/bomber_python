@@ -124,7 +124,32 @@ class Chara(GameTask):
 
     def draw(self):
         pass
+
+    def disappear(self):
+        self.dead = True
+        self.field_map.put(self.XY,Type.FREE)
         
+
+class TaskContainer:
+    def __init__(self):
+        self.tasklist = []
+
+    def add(self,gametask):
+        self.tasklist.append(gametask)
+
+    def execute(self):
+        for t in self.tasklist:
+            t.execute()
+
+    def draw(self):
+        for t in self.tasklist:
+            t.draw()
+
+    def terminate(self):
+        self.tasklist = list(filter(lambda x:x.dead==False,self.tasklist))
+
+
+
 
 class Item(Chara):
     def __init__(self, X, Y, item_type):
@@ -174,7 +199,6 @@ class Bom(Chara):
         fmap.put(XY,Type.BOM)
         self.power = power
         self.timer = BOM_TIMEOUT_FRAME
-        self.dead = False
         self.size_ratio = (1.0,0.9,0.8,0.9)
     
 #    def explode(self):
@@ -242,7 +266,7 @@ class Bom(Chara):
         # timer overflow
         self.timer -= 1
         if self.timer < 0:
-            self.dead = True
+            self.disappear()
 #            self.explode()
             print("explode")
         # in an explosion
@@ -703,17 +727,15 @@ if __name__ == "__main__":
     pygame.display.set_caption("bomber man")
     clock = pygame.time.Clock()
 
+    tc = TaskContainer()
     fmap = FieldMap()
-
-    task = []
-    task.append(fmap)
-
-    task.append(Block((3,3),fmap))
+    tc.add(fmap)
+    tc.add(Block((3,3),fmap))
 
     player = Player((1,1),fmap)
-    task.append(player)
+    tc.add(player)
 
-    task.append(Bom((5,5),2,fmap))
+    tc.add(Bom((5,5),2,fmap))
 
     running = True
     while running:
@@ -723,12 +745,11 @@ if __name__ == "__main__":
 
         player.control(key_input)
 
+        tc.execute()
+        tc.draw()
 
-        for t in task:
-            t.execute()
-            t.draw()
 
-        task = list(filter(lambda x:x.dead==False,task))
+        tc.terminate()
 
         pygame.display.flip()
         fpsClock.tick(FPS)
