@@ -384,6 +384,10 @@ class Player(Chara):
 #                    self.bom_stock += 1
         
     def draw(self):
+        pygame.draw.rect(screen,
+                (100,100,0),
+                (self.XY[0]*CHIPSIZE,self.XY[1]*CHIPSIZE,CHIPSIZE,CHIPSIZE),
+                )
         pygame.draw.circle(
             screen,
             (255,255,255),
